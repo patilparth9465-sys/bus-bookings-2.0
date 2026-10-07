@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Owner: bookings</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#eef2f5;--card:#fff;--ink:#16222b;--mute:#5d6b76;--line:#d5dde3;--brand:#0d5c91;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#10181e;--card:#18232b;--ink:#e8eef2;--mute:#9aa9b4;--line:#2c3b46;--brand:#5db3ee}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:640px;margin:0 auto;padding:16px}.c{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+h1{font-size:20px;margin:0}h2{font-size:16px;margin:18px 0 0}.m{color:var(--mute);font-size:14px}
+input{width:100%;padding:10px;margin:6px 0;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:16px system-ui,sans-serif}
+button{border:0;border-radius:9px;padding:11px 16px;font:600 15px system-ui,sans-serif;cursor:pointer;background:var(--brand);color:#fff}
+.no{background:transparent;color:#b3261e;border:2px solid #b3261e}.row{display:flex;gap:10px;margin-top:10px}.row button{flex:1}
+.hide{display:none}.e{color:#b3261e;font-size:14px}
+</style></head><body><div class="w">
+<h1>Bus bookings (owner)</h1>
+<div class="c" id="login"><b>Owner login</b>
+<input id="em" type="email" placeholder="Email" autocomplete="username">
+<input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+<button id="in">Log in</button><div class="e" id="le"></div></div>
+<div id="app" class="hide">
+<p class="m">Check the payment in your Paytm app or bank SMS first (amount and UTR must match). Then tap Confirm. The customer gets an SMS automatically. <button class="no" id="out" style="padding:4px 10px;font-size:13px">Log out</button></p>
+<h2>Waiting for your confirmation</h2><div id="pend"></div>
+<h2>Confirmed</h2><div id="done"></div>
+</div></div>
+<script>
+var URL_="PASTE_SUPABASE_URL",KEY_="PASTE_SUPABASE_ANON_KEY";
+var db=supabase.createClient(URL_,KEY_),$=function(i){return document.getElementById(i)},t=null;
+function line(b,pending){
+  var d=document.createElement("div");d.className="c";
+  var h=document.createElement("div");h.textContent=b.ref+"  |  Seats: "+b.seats.join(", ")+"  |  \u20B9"+b.amount;h.style.fontWeight="700";d.appendChild(h);
+  var m=document.createElement("div");m.className="m";
+  m.textContent=b.name+"  |  "+b.phone+"  |  "+b.boarding+(b.utr?"  |  UTR "+b.utr:"")+"  |  "+new Date(b.created_at).toLocaleString("en-IN");d.appendChild(m);
+  if(pending){var r=document.createElement("div");r.className="row";
+    var y=document.createElement("button");y.textContent="Confirm";y.onclick=function(){act(b.id,"confirmed",y)};
+    var n=document.createElement("button");n.textContent="Reject";n.className="no";n.onclick=function(){if(confirm("Reject and release these seats?"))act(b.id,"rejected",n)};
+    r.appendChild(y);r.appendChild(n);d.appendChild(r)}
+  return d}
+async function act(id,s,btn){btn.disabled=true;var r=await db.rpc("admin_set",{p_id:id,p_status:s});if(r.error)alert("Failed: "+r.error.message);load()}
+async function load(){
+  var r=await db.from("bookings").select("*").in("status",["pending","confirmed"]).order("created_at",{ascending:false});
+  if(r.error)return;
+  var p=$("pend"),d=$("done");p.textContent="";d.textContent="";
+  r.data.forEach(function(b){(b.status==="pending"?p:d).appendChild(line(b,b.status==="pending"))});
+  if(!p.children.length)p.textContent="Nothing waiting.";if(!d.children.length)d.textContent="No confirmed bookings yet."}
+function start(){$("login").classList.add("hide");$("app").classList.remove("hide");load();t=setInterval(load,10000)}
+$("in").onclick=async function(){var r=await db.auth.signInWithPassword({email:$("em").value.trim(),password:$("pw").value});
+  if(r.error)$("le").textContent="Wrong email or password.";else start()};
+$("out").onclick=async function(){await db.auth.signOut();clearInterval(t);location.reload()};
+db.auth.getSession().then(function(r){if(r.data&&r.data.session)start()});
+</script></body></html>

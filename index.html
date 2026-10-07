@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Book your bus seat</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#eef2f5;--card:#fff;--ink:#16222b;--mute:#5d6b76;--line:#d5dde3;--brand:#0d5c91;--road:#f2b705;--taken:#c9d1d7;--ok:#17803d;--bad:#b3261e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181e;--card:#18232b;--ink:#e8eef2;--mute:#9aa9b4;--line:#2c3b46;--brand:#5db3ee;--taken:#33424d;--ok:#4cc27a;--bad:#ff8a80}}
+:root[data-theme="dark"]{--bg:#10181e;--card:#18232b;--ink:#e8eef2;--mute:#9aa9b4;--line:#2c3b46;--brand:#5db3ee;--taken:#33424d;--ok:#4cc27a;--bad:#ff8a80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2{font-family:Archivo,"Arial Narrow",Arial,sans-serif;margin:0}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+.hero{background:var(--ink);color:var(--bg);border-radius:14px;padding:20px 20px 24px;position:relative;overflow:hidden}
+:root:not([data-theme="light"]) .hero{--hb:#16222b}
+.hero{background:#16222b;color:#f3f6f8}
+.hero h1{font-size:26px;font-weight:800;letter-spacing:-.01em}
+.route{display:flex;align-items:center;gap:10px;margin-top:10px;font:700 20px Archivo,Arial,sans-serif}
+.route i{flex:1;border-top:3px dashed var(--road);height:0}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:14px;color:#b9c6cf}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:14px}
+.card h2{font-size:18px;font-weight:700;margin-bottom:10px}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--mute);margin-bottom:12px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:16px;height:16px;border-radius:5px;border:2px solid var(--brand);display:inline-block}
+.dot.t{background:var(--taken);border-color:var(--taken)}.dot.s{background:var(--road);border-color:var(--road)}
+.bus{border:2px solid var(--line);border-radius:26px 26px 12px 12px;padding:14px 12px 12px;background:var(--bg);overflow-x:auto}
+.front{text-align:right;font-size:12px;color:var(--mute);margin:0 8px 8px}
+.row{display:grid;grid-template-columns:repeat(2,1fr) 28px repeat(2,1fr);gap:8px;margin-bottom:8px;max-width:340px;margin-inline:auto}
+.seat{height:42px;border-radius:8px;border:2px solid var(--brand);background:var(--card);color:var(--ink);font:600 13px Inter,sans-serif;cursor:pointer;padding:0}
+.seat:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--road);outline-offset:2px}
+.seat.sel{background:var(--road);border-color:var(--road);color:#16222b}
+.seat:disabled{background:var(--taken);border-color:var(--taken);color:var(--mute);cursor:not-allowed;text-decoration:line-through}
+.aisle{display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--mute)}
+.bar{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+.bar b{font:800 20px Archivo,Arial,sans-serif}
+.btn{border:0;border-radius:10px;background:var(--brand);color:#fff;font:600 16px Inter,sans-serif;padding:12px 18px;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+:root:not([data-theme="light"]) .btn{color:#06121b}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--brand);border:2px solid var(--brand)}
+label{display:block;font-weight:600;font-size:14px;margin:12px 0 4px}
+input,select{width:100%;padding:11px 12px;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:400 16px Inter,sans-serif}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin-top:3px}
+.qrbox{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;border:2px dashed var(--line);border-radius:12px;background:#fff}
+.qrbox #qr{width:200px;height:200px;display:flex}
+.qrbox img,.qrbox canvas{max-width:100%}
+.note{font-size:13px;color:var(--mute)}
+.warn{background:#fff4d6;color:#5a4300;border-radius:8px;padding:8px 10px;font-size:13px;margin-top:10px}
+.sum{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.hide{display:none}
+.steps{display:flex;gap:6px;margin-top:14px}.steps div{flex:1;height:5px;border-radius:3px;background:var(--line)}.steps div.on{background:var(--road)}
+@media (prefers-reduced-motion:no-preference){.seat{transition:background .12s}}
+.banner{margin-top:14px;padding:14px;border-radius:12px;font-weight:600;background:#fff4d6;color:#5a4300;border:1px solid #f2b705}
+.banner.ok{background:#dff5e6;color:#0f5a2b;border-color:#17803d}.banner.bad{background:#fde4e1;color:#7a1710;border-color:#b3261e}
+.seat.sel:disabled{background:var(--road);border-color:var(--road);color:#16222b;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1 id="busName"></h1>
+    <div class="route"><span id="from"></span><i></i><span id="to"></span></div>
+    <div class="meta"><span id="date"></span><span id="time"></span><span id="fare"></span></div>
+  </div>
+  <div class="steps" aria-hidden="true"><div class="on" id="s1"></div><div id="s2"></div><div id="s3"></div></div>
+  <div class="banner hide" id="banner" role="status"></div>
+
+  <section id="p1">
+    <div class="card">
+      <h2 id="mapTitle">Choose your seats</h2>
+      <div class="legend"><span><i class="dot"></i>Available</span><span><i class="dot s"></i>Yours</span><span><i class="dot t"></i>Locked / booked</span></div>
+      <div class="bus"><div class="front">Driver &rarr;</div><div id="seats"></div></div>
+      <p class="note" id="maxNote"></p>
+    </div>
+    <div class="bar" id="bar1"><div><div class="note" id="picked">No seat selected</div><b id="total">&#8377;0</b></div><button class="btn" id="to2" disabled>Continue</button></div>
+  </section>
+
+  <section id="p2" class="hide">
+    <div class="card">
+      <h2>Passenger details</h2>
+      <label for="name">Full name</label><input id="name" autocomplete="name" maxlength="40">
+      <div class="err" id="eName"></div>
+      <label for="phone">Mobile number (we send your confirmation SMS here)</label><input id="phone" inputmode="numeric" autocomplete="tel" maxlength="10">
+      <div class="err" id="ePhone"></div>
+      <label for="board">Boarding point</label><select id="board"><option>Akurdi</option><option>Nigdi Bhakti Shakti</option><option>Spine Road</option><option>Moshi Toll Naka</option></select>
+      <p class="note">Your seats are locked for 15 minutes once you continue.</p>
+    </div>
+    <div class="bar"><button class="btn ghost" id="b1">Back</button><button class="btn" id="lock">Lock seats and pay</button></div>
+  </section>
+
+  <section id="p3" class="hide">
+    <div class="card">
+      <h2>Pay and confirm</h2>
+      <div class="warn" id="cd" style="margin:0 0 10px"></div>
+      <div id="summary"></div>
+      <p style="margin:14px 0 8px"><b>1.</b> Scan this QR with any UPI app and pay the exact amount.</p>
+      <div class="qrbox"><div id="qr"></div><b id="payAmt"></b><a class="btn ghost" id="upiLink" href="#">Open UPI app</a></div>
+      <p style="margin:14px 0 4px"><b>2.</b> Enter the 12-digit UPI reference (UTR) from your payment receipt.</p>
+      <input id="utr" inputmode="numeric" maxlength="12" placeholder="12-digit UTR number" aria-label="UTR number">
+      <div class="err" id="eUtr"></div>
+    </div>
+    <div class="bar"><button class="btn" id="paid" style="width:100%">I have paid</button></div>
+  </section>
+  <p class="note" style="text-align:center;margin:18px 0 8px">Pay only through the QR on this page. We never ask for card details, PINs or OTPs.</p>
+</div>
+
+<script>
+(function(){
+/* ===== CONFIG ===== */
+var C={busName:"Your Travels",from:"Pune (Akurdi)",to:"Shahada",date:"Date to be announced",time:"Departure time",
+  fare:1299,                         // display only. The real price is v_fare in supabase.sql: keep both the same
+  rows:11,maxSeats:5,upiId:"8999507026@ptyes",payeeName:"Your Travels",ownerPhone:"8999507026",
+  url:"PASTE_SUPABASE_URL",key:"PASTE_SUPABASE_ANON_KEY"};
+/* ===== end CONFIG ===== */
+var $=function(i){return document.getElementById(i)},rup=function(n){return "\u20B9"+Number(n).toLocaleString("en-IN")};
+var sel=[],taken=[],mine=[],bk=null,locked=false,timer=null,db=null;
+try{db=supabase.createClient(C.url,C.key)}catch(e){db=null}
+$("busName").textContent=C.busName;$("from").textContent=C.from;$("to").textContent=C.to;
+$("date").textContent=C.date;$("time").textContent=C.time;$("fare").textContent=rup(C.fare)+" per seat";
+$("maxNote").textContent="You can book up to "+C.maxSeats+" seats at once.";
+
+function seatBtn(id){
+  var b=document.createElement("button");b.type="button";b.className="seat";b.textContent=id;b.setAttribute("aria-label","Seat "+id);
+  if(mine.indexOf(id)>-1){b.classList.add("sel");b.disabled=true}
+  else if(taken.indexOf(id)>-1){b.disabled=true}
+  else{if(sel.indexOf(id)>-1)b.classList.add("sel");if(locked)b.disabled=true;else b.onclick=function(){pick(id)}}
+  return b}
+function draw(){
+  var el=$("seats");el.textContent="";
+  var r0=document.createElement("div");r0.className="row";r0.appendChild(seatBtn("S1"));
+  for(var k=0;k<4;k++)r0.appendChild(document.createElement("div"));el.appendChild(r0);
+  for(var r=1;r<=C.rows;r++){var row=document.createElement("div");row.className="row";
+    ["A","B",0,"C","D"].forEach(function(l){
+      if(!l){var a=document.createElement("div");a.className="aisle";a.textContent=r;row.appendChild(a)}
+      else row.appendChild(seatBtn(r+l))});
+    el.appendChild(row)}}
+function upd(){
+  $("picked").textContent=sel.length?"Seats: "+sel.join(", "):"No seat selected";
+  $("total").textContent=rup(sel.length*C.fare);$("to2").disabled=!sel.length}
+function pick(id){
+  var i=sel.indexOf(id);
+  if(i>-1)sel.splice(i,1);
+  else{if(sel.length>=C.maxSeats){$("maxNote").textContent="Maximum "+C.maxSeats+" seats per booking.";return}sel.push(id)}
+  upd();draw()}
+function show(n){["p1","p2","p3"].forEach(function(p,i){$(p).classList.toggle("hide",i+1!==n)});
+  [1,2,3].forEach(function(i){$("s"+i).classList.toggle("on",i<=n)});window.scrollTo(0,0)}
+function banner(t,cls){var b=$("banner");b.textContent=t;b.className="banner "+(cls||"");}
+
+async function refresh(){
+  if(!db){draw();return}
+  var r=await db.rpc("taken_seats");
+  if(r.error||!Array.isArray(r.data))return;
+  taken=r.data;
+  if(!bk){var lost=sel.filter(function(s){return taken.indexOf(s)>-1});
+    if(lost.length){sel=sel.filter(function(s){return lost.indexOf(s)<0});upd();$("maxNote").textContent="Seat "+lost.join(", ")+" was just taken by someone else."}}
+  draw()}
+
+$("to2").onclick=function(){show(2)};$("b1").onclick=function(){show(1)};
+$("phone").oninput=function(){this.value=this.value.replace(/\D/g,"")};
+$("utr").oninput=function(){this.value=this.value.replace(/\D/g,"")};
+
+$("lock").onclick=async function(){
+  var n=$("name").value.trim(),p=$("phone").value.trim(),bad=false;
+  $("eName").textContent="";$("ePhone").textContent="";
+  if(!/^[A-Za-z][A-Za-z .'-]{1,39}$/.test(n)){$("eName").textContent="Enter your name using letters only.";bad=true}
+  if(!/^[6-9]\d{9}$/.test(p)){$("ePhone").textContent="Enter a valid 10-digit Indian mobile number.";bad=true}
+  if(bad)return;
+  if(!db){$("eName").textContent="Booking is not set up yet. Please try again later.";return}
+  var btn=this;btn.disabled=true;
+  var r=await db.rpc("hold_seats",{p_seats:sel,p_name:n,p_phone:p,p_boarding:$("board").value});
+  btn.disabled=false;
+  if(r.error){
+    if(/seat_taken/.test(r.error.message)){sel=[];upd();await refresh();show(1);$("maxNote").textContent="Someone just took one of those seats. Please pick again."}
+    else $("eName").textContent="Could not lock your seats. Check your details and try again.";
+    return}
+  bk=r.data;bk.phone=p;bk.seats=sel.slice();mine=sel.slice();sel=[];upd();
+  var s=$("summary");s.textContent="";
+  [["Booking ref",bk.ref],["Passenger",n],["Seats",bk.seats.join(", ")],["Boarding",$("board").value],["Amount",rup(bk.amount)]].forEach(function(x){
+    var d=document.createElement("div");d.className="sum";var a=document.createElement("span"),b=document.createElement("b");
+    a.textContent=x[0];b.textContent=x[1];d.appendChild(a);d.appendChild(b);s.appendChild(d)});
+  $("payAmt").textContent="Pay "+rup(bk.amount);
+  var link="upi://pay?pa="+encodeURIComponent(C.upiId)+"&pn="+encodeURIComponent(C.payeeName)+"&am="+Number(bk.amount).toFixed(2)+"&cu=INR&tn="+encodeURIComponent("Bus "+bk.ref);
+  $("upiLink").href=link;var q=$("qr");q.textContent="";
+  try{new QRCode(q,{text:link,width:200,height:200,correctLevel:QRCode.CorrectLevel.M})}catch(e){q.textContent="Use the Open UPI app button."}
+  var end=new Date(bk.expires_at).getTime();
+  clearInterval(timer);
+  timer=setInterval(function(){
+    var left=Math.max(0,Math.floor((end-Date.now())/1000));
+    $("cd").textContent=left>0?"Your seats are locked for "+Math.floor(left/60)+":"+("0"+left%60).slice(-2)+" more minutes. Pay and enter the UTR before time runs out.":"Hold expired. Reload this page to pick seats again.";
+    if(!left){clearInterval(timer);$("paid").disabled=true}},1000);
+  show(3);draw()};
+
+$("paid").onclick=async function(){
+  var u=$("utr").value.trim();$("eUtr").textContent="";
+  if(!/^\d{12}$/.test(u)){$("eUtr").textContent="Enter the 12-digit UTR from your payment receipt.";return}
+  this.disabled=true;
+  var r=await db.rpc("submit_payment",{p_ref:bk.ref,p_phone:bk.phone,p_utr:u});
+  if(r.data===true){clearInterval(timer);locked=true;try{sessionStorage.setItem("bk",JSON.stringify(bk))}catch(e){}status()}
+  else{this.disabled=false;$("eUtr").textContent="Could not submit. Your hold may have expired. Reload the page and try again."}};
+
+function status(){
+  show(1);$("bar1").classList.add("hide");$("mapTitle").textContent="Your seats";
+  $("s2").classList.add("on");$("s3").classList.add("on");
+  banner("Payment submitted. Your seats "+bk.seats.join(", ")+" are locked for you. We are verifying your payment and will SMS you on "+bk.phone+" once it is confirmed.","wait");
+  draw();poll()}
+async function poll(){
+  if(!bk||!locked)return;
+  var r=await db.rpc("booking_status",{p_ref:bk.ref,p_phone:bk.phone});
+  if(r.data==="confirmed")banner("Booking confirmed! Ref "+bk.ref+", seats "+bk.seats.join(", ")+". We have sent a confirmation SMS to "+bk.phone+".","ok");
+  else if(r.data==="rejected"){banner("We could not verify your payment, so your seats were released. Please call "+C.ownerPhone+" with Ref "+bk.ref+".","bad");mine=[];locked=false;try{sessionStorage.removeItem("bk")}catch(e){}}}
+
+try{var saved=sessionStorage.getItem("bk");if(saved){bk=JSON.parse(saved);mine=bk.seats;locked=true}}catch(e){}
+refresh().then(function(){if(bk&&locked)status();else draw()});
+draw();
+if(!db)banner("Setup not finished: add your Supabase URL and key in index.html (README step 4). Seats are shown for preview only.","bad");
+setInterval(function(){refresh();poll()},8000);
+})();
+</script>
+</body>
+</html>
